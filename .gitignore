@@ -1,0 +1,21 @@
+# Binarios y archivos compilados de Go
+bin/
+*.exe
+*.test
+*.prof
+
+# Datos locales de Docker (Base de datos)
+postgres_data/
+
+# Archivos de configuración local
+.env
+.env.local
+.vscode/
+.idea/
+.DS_Store
+
+# Archivos temporales de Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars

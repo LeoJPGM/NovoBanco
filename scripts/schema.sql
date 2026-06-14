@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
-    reference_unique VARCHAR(20) UNIQUE NOT NULL, -- Idempotencia y búsqueda
+    reference_unique VARCHAR(100) UNIQUE NOT NULL, -- Idempotencia y búsqueda
     amount NUMERIC(15, 2) NOT NULL,
     type VARCHAR(20) NOT NULL, -- 'deposit' | 'withdrawal' | 'transfer_out' | 'transfer_in'
     status VARCHAR(20) DEFAULT 'SUCCESSFUL' NOT NULL, -- 'successful' | 'failed' | 'reverted'

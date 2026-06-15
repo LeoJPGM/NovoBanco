@@ -1,0 +1,89 @@
+@baseUrl = http://localhost:3000
+
+### 1. Crear Cuenta de Ahorros del Cliente 1
+# @name createAccount1
+POST {{baseUrl}}/api/accounts
+Content-Type: application/json
+
+{
+  "client_id": "CLIENTE-001",
+  "type": "SAVINGS",
+  "balance": 500.00
+}
+
+### Guardamos la variable devuelta en la respuesta
+@accountNumber1 = {{createAccount1.response.body.account_number}}
+
+### 2. Crear Cuenta Corriente del Cliente 2
+# @name createAccount2
+POST {{baseUrl}}/api/accounts
+Content-Type: application/json
+
+{
+  "client_id": "CLIENTE-002",
+  "type": "CHECKING",
+  "balance": 150.00
+}
+
+@accountNumber2 = {{createAccount2.response.body.account_number}}
+
+### 3. Consultar Saldo de la Cuenta 1
+GET {{baseUrl}}/api/accounts/balance?account_number={{accountNumber1}}
+
+### 4. Consultar Detalles de la Cuenta 1
+GET {{baseUrl}}/api/accounts/details?account_number={{accountNumber1}}
+
+### 5. Depositar Fondos en la Cuenta 1
+POST {{baseUrl}}/api/transactions/deposit
+Content-Type: application/json
+
+{
+  "account_number": "{{accountNumber1}}",
+  "amount": 100.00,
+  "reference": "DEP-REF-001"
+}
+
+### 6. Depositar Duplicado (Prueba Idempotencia - Debería retornar HTTP 409 Conflict)
+POST {{baseUrl}}/api/transactions/deposit
+Content-Type: application/json
+
+{
+  "account_number": "{{accountNumber1}}",
+  "amount": 100.00,
+  "reference": "DEP-REF-001"
+}
+
+### 7. Retirar Fondos de la Cuenta 1
+POST {{baseUrl}}/api/transactions/withdraw
+Content-Type: application/json
+
+{
+  "account_number": "{{accountNumber1}}",
+  "amount": 50.00,
+  "reference": "WIT-REF-001"
+}
+
+### 8. Transferencia entre Cuenta 1 y Cuenta 2 (Atómica)
+POST {{baseUrl}}/api/transactions/transfer
+Content-Type: application/json
+
+{
+  "from_account_number": "{{accountNumber1}}",
+  "to_account_number": "{{accountNumber2}}",
+  "amount": 200.00,
+  "reference": "TRF-REF-001"
+}
+
+### 9. Intentar transferir más del saldo disponible (Debería retornar HTTP 422 Unprocessable Entity)
+POST {{baseUrl}}/api/transactions/transfer
+Content-Type: application/json
+
+{
+  "from_account_number": "{{accountNumber1}}",
+  "to_account_number": "{{accountNumber2}}",
+  "amount": 1000.00,
+  "reference": "TRF-REF-002"
+}
+
+### 10. Consultar Historial Paginado de Movimientos (Últimos 20)
+GET {{baseUrl}}/api/transactions/movements?account_number={{accountNumber1}}&limit=20

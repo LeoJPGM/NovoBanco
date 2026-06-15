@@ -1,0 +1,56 @@
+name: Go CI/CD Pipeline
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    # Levanta una base de datos PostgreSQL real temporal dentro de GitHub para correr las pruebas de integración
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: novobanco
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+      - name: Configurar entorno de Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: true
+      - name: Instalar dependencias
+        run: go mod download
+      - name: Inicializar esquema en BD de pruebas
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql -h localhost -U postgres -d novobanco -f scripts/schema.sql
+        env:
+          PGPASSWORD: postgres
+      - name: Verificar formateo del código (Go Fmt)
+        run: |
+          if [ -n "$(go fmt ./...)" ]; then
+            echo "El código tiene problemas de formato. Ejecuta 'go fmt ./...'"
+            exit 1
+          fi
+      - name: Compilar la aplicación
+        run: go build -v ./...
+      - name: Ejecutar pruebas unitarias y concurrentes
+        run: go test -v ./...
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: novobanco
